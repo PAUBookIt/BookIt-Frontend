@@ -268,7 +268,7 @@ const Login = () => {
           </div>
                               {" "}
           <div className="input-group">
-                M         <label htmlFor="login-password">Password</label>
+                         <label htmlFor="login-password">Password</label>
                        {" "}
             <input
               type="password"
