@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/logo.jpeg";
-import "../../index.css"; // Use the global CSS
+import "../../index.css";
 
 // Default users for development phase
 const DEFAULT_USERS = [
@@ -61,6 +61,7 @@ const Login = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [isDevMode, setIsDevMode] = useState(false);
 
+  // Get authentication context and navigation
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -231,13 +232,10 @@ const Login = () => {
               Admin: admin@pau.edu.ng / Admin123
               <br />
               Student: student@pau.edu.ng / Student123
-              <br />
-              Facility: facility@pau.edu.ng / Facility123
             </div>
           )}
         </div>
       </div>
-
       <div className="form-container">
         <form id="loginForm" className="form active" onSubmit={handleSubmit}>
           <div className="input-group">
@@ -254,7 +252,6 @@ const Login = () => {
               <p className="error-message visible">{errors.email}</p>
             )}
           </div>
-
           <div className="input-group">
             <label htmlFor="login-password">Password</label>
             <input
@@ -269,7 +266,6 @@ const Login = () => {
               <p className="error-message visible">{errors.password}</p>
             )}
           </div>
-
           <div className="links-div">
             <div className="forgot-pass">
               <a href="/#" onClick={handleSignup}>
@@ -282,11 +278,9 @@ const Login = () => {
               </a>
             </div>
           </div>
-
           <button type="submit" className="submit-btn" disabled={isLoading}>
             {isLoading ? "Logging in..." : "Log In"}
           </button>
-
           {isLoading && (
             <div className="loading visible">
               <div className="spinner"></div>
@@ -294,7 +288,6 @@ const Login = () => {
           )}
         </form>
       </div>
-
       {message.text && (
         <div className="message-container">
           <div className={`message ${message.type}`}>{message.text}</div>
