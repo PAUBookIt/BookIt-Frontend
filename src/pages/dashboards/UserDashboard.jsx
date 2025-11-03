@@ -11,6 +11,7 @@ import { isBackendOnline } from "../../services/status.js";
 // We get the user from the AuthContext now
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import "../../index.css"; // <-- Make sure global CSS is imported
 
 // --- Helper component for rendering reservations ---
 const ReservationItem = ({ reservation, status, onEdit, onDelete }) => (
@@ -626,7 +627,11 @@ function UserDashboard() {
                           room.available ? "available" : "unavailable"
                         }`}
                         style={{ width: "170px", margin: "0.5rem 0" }}
-                        onClick={() => openReservationModal(room)}
+                        onClick={() =>
+                          room.available
+                            ? openReservationModal(room)
+                            : showUnavailableAlert(room)
+                        }
                       >
                         <div className="classroom-name">{room.name}</div>
                         <div className="classroom-capacity">

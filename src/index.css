@@ -1,16 +1,324 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Pacifico&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap");
+/* ---
+GLOBAL STYLESHEET (MASTER)
+This file contains all styles for all pages:
+1. Base & Login Styles
+2. User Dashboard Styles
+3. Admin & Facility Dashboard Styles
+4. Global Modal & Alert Styles
+5. Responsive Media Queries
+--- */
 
+/* --- 1. BASE & LOGIN STYLES --- */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Pacifico&display=swap");
+
+:root {
+  /* Color variables */
+  --color-dark-blue: #0a2463;
+  --color-medium-blue: #3e92cc;
+  --color-white: #fff;
+  --color-gray-light: #f5f5f5;
+  --color-gray: #ddd;
+  --color-dark: #333;
+
+  /* Shadow variables */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.1);
+
+  /* Status colors */
+  --color-success: #28a745;
+  --color-success-bg: #d4edda;
+  --color-success-text: #155724;
+
+  --color-error: #dc3545;
+  --color-error-bg: #f8d7da;
+  --color-error-text: #721c24;
+
+  --color-info: #4a6fdc;
+  --color-info-bg: #e3f2fd;
+  --color-info-text: #0c5460;
+
+  /* Transition speeds */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+}
+
+/* Base styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+body,
+html {
+  font-family: "Montserrat", sans-serif;
+  background-color: var(--color-gray-light);
+  min-height: 100vh;
+}
+
+/* Login container */
+.container {
+  width: 100%;
+  max-width: 900px;
+  min-height: 500px;
+  height: auto;
+  background-color: var(--color-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 2rem auto; /* Center login container */
+}
+
+/* Sidebar with logo and welcome message */
+.sidebar {
+  width: 100%;
+  padding: 2rem 1.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-dark-blue),
+    var(--color-medium-blue)
+  );
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logo container */
+.logo-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo-container .logo img {
+  height: 50px;
+  width: auto;
+  border-radius: 12px;
+  margin-right: 12px;
+}
+
+.app-name {
+  font-family: "Pacifico", cursive;
+  font-size: 2rem;
+  color: var(--color-white);
+}
+
+.app_name_differentiate {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-size: 2rem;
+  margin-right: -10px;
+  color: var(--color-white);
+}
+
+/* Content in the sidebar */
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sidebar h1 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar p {
+  font-size: 1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+/* Form container */
+.form-container {
+  width: 100%;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Form styling */
+.form.active {
+  display: block;
+}
+
+.input-group {
+  margin-bottom: 1.25rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-dark);
+}
+
+.input-group input,
+.input-group textarea,
+.input-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--color-gray);
+  border-radius: 6px;
+  font-size: 0.9375rem;
+  transition: border var(--transition-normal) ease;
   font-family: "Montserrat", sans-serif;
 }
 
-body {
-  background-color: #f8f9fa;
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group select:focus {
+  border-color: var(--color-medium-blue);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(62, 146, 204, 0.1);
 }
+
+/* Links div container */
+.links-div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+/* Forgot password link */
+.forgot-pass {
+  text-align: right;
+  margin-bottom: 1.25rem;
+}
+
+.forgot-pass a {
+  color: var(--color-medium-blue);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color var(--transition-fast) ease;
+}
+
+.forgot-pass a:hover {
+  color: var(--color-dark-blue);
+  text-decoration: underline;
+}
+
+/* Submit button */
+.submit-btn {
+  background-color: var(--color-dark-blue);
+  color: var(--color-white);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-normal) ease;
+  width: 100%;
+  margin-top: 0.625rem;
+}
+
+.submit-btn:hover {
+  background-color: var(--color-medium-blue);
+}
+
+.submit-btn:disabled {
+  background-color: var(--color-gray);
+  cursor: not-allowed;
+}
+
+/* Error message styling */
+.error-message {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: 0.3125rem;
+  display: none;
+}
+
+.error-message.visible {
+  display: block;
+}
+
+/* Loading spinner */
+.loading {
+  display: none;
+  text-align: center;
+  margin-top: 0.625rem;
+}
+
+.loading.visible {
+  display: block;
+}
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 3px solid var(--color-medium-blue);
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Message container for notifications (used by Login) */
+.message-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-md);
+  animation: slideInRight 0.3s ease;
+}
+
+.message.success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-left: 4px solid var(--color-success);
+}
+
+.message.error {
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
+  border-left: 4px solid var(--color-error);
+}
+
+.message.info {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-text);
+  border-left: 4px solid var(--color-info);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* --- 2. USER DASHBOARD STYLES --- */
 
 .logo_differentiate {
   font-family: "Montserrat", sans-serif;
@@ -53,7 +361,6 @@ body {
   gap: 1rem;
 }
 
-/* Profile Picture Styles */
 .profile-container {
   position: relative;
   display: flex;
@@ -116,71 +423,6 @@ body {
   font-size: 0.9rem;
 }
 
-/* Confirmation Modal for Logout */
-.logout-confirm-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1200;
-  justify-content: center;
-  align-items: center;
-}
-
-.logout-modal-content {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  max-width: 400px;
-  width: 100%;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.logout-modal-header {
-  margin-bottom: 1rem;
-}
-
-.logout-modal-header h3 {
-  color: #333;
-  font-size: 1.2rem;
-}
-
-.logout-modal-message {
-  margin-bottom: 1.5rem;
-  color: #555;
-}
-
-.logout-modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.logout-cancel-btn {
-  padding: 0.6rem 1.2rem;
-  border: 1px solid #ddd;
-  background-color: #f8f9fa;
-  color: #555;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.logout-proceed-btn {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #dc3545;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-/* Modify .dashboard-container to use grid instead of flex */
 .dashboard-container {
   display: grid;
   grid-template-columns: 70% 30%;
@@ -190,7 +432,6 @@ body {
   padding: 2rem;
 }
 
-/* Adjust notifications-panel width to fill its container */
 .notifications-panel {
   width: 100%;
   background-color: white;
@@ -200,29 +441,6 @@ body {
   align-self: flex-start;
   position: sticky;
   top: 90px;
-}
-
-.alert-message {
-  flex: 1;
-}
-
-.alert-actions {
-  margin-top: 1rem;
-  text-align: right;
-}
-
-.alert-button {
-  background-color: #4a6fdc;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.alert-button:hover {
-  background-color: #3a5db8;
 }
 
 .recurrent-badge {
@@ -320,12 +538,6 @@ body {
   margin-right: 0.25rem;
 }
 
-/* .classrooms-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
-} */
-
 .classroom-card {
   padding: 1.5rem;
   border-radius: 6px;
@@ -362,95 +574,6 @@ body {
 .classroom-card.available:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(76, 217, 100, 0.2);
-}
-
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 8px;
-  max-width: 500px;
-  width: 100%;
-  height: auto;
-  overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.modal-header h2 {
-  color: #333;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-}
-
-.modal-form-group {
-  margin-bottom: 1.5rem;
-}
-
-.modal-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #555;
-}
-
-.modal-input,
-.modal-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.modal-textarea {
-  min-height: 100px;
-  resize: vertical;
-}
-
-.reserve-btn {
-  background-color: #4a6fdc;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  width: 100%;
-}
-
-.reserve-btn:hover {
-  background-color: #3a5db8;
-}
-
-.active-location {
-  color: #4a6fdc;
-  font-weight: 600;
 }
 
 .classroom-filter-status {
@@ -517,8 +640,6 @@ body {
   background-color: #f8d7da;
   color: #721c24;
 }
-
-/* --- OLD STYLES REMOVED --- */
 
 .reservation-notification {
   display: flex;
@@ -598,197 +719,11 @@ body {
   display: flex;
 }
 
-.reminder-alert {
-  background-color: #e3f2fd;
-  color: #4a6fdc;
-}
-
-.reminder-alert i {
-  color: #4a6fdc;
-}
-
 .reservation-notification.reminder {
   background-color: #e3f2fd;
   color: #4a6fdc;
 }
 
-/* --- OLD ANIMATIONS REMOVED --- */
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (max-width: 1200px) {
-  .dashboard-container {
-    grid-template-columns: 1fr;
-  }
-
-  .notifications-panel {
-    width: 100%;
-    position: static;
-  }
-
-  .modal-content {
-    width: 90%;
-    max-height: 80vh;
-    padding: 1.5rem;
-  }
-}
-
-/* Update the modal-content width for mobile view */
-@media (max-width: 768px) {
-  .header {
-    padding: 1rem;
-    gap: 0.3rem;
-  }
-
-  .logout-btn {
-    margin-left: 0.2rem;
-  }
-
-  .user-info {
-    display: flex;
-    align-items: center;
-  }
-
-  .user-details {
-    display: none;
-  }
-
-  .date-time-selector {
-    flex-direction: column;
-  }
-
-  .date-time-input {
-    width: 100%;
-  }
-
-  .modal-content {
-    width: 80%;
-    /* height: 80%; */
-    padding: 1.5rem;
-  }
-
-  .location-title {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .location-status {
-    margin-top: 0.5rem;
-  }
-
-  .dashboard-container {
-    padding: 1rem;
-  }
-
-  .reservation-notification {
-    flex-direction: column;
-  }
-
-  .reservation-actions {
-    margin-top: 0.5rem;
-    align-self: flex-end;
-  }
-}
-
-/* Add styles to ensure two cards per row on mobile */
-@media (max-width: 768px) {
-  .classroom-card {
-    width: calc(50% - 0.5rem);
-    flex-basis: calc(50% - 0.5rem);
-  }
-
-  .classrooms-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: space-between;
-  }
-}
-
-/* For very small screens, ensure the cards still look good */
-@media (max-width: 400px) {
-  .classroom-card {
-    width: calc(45% - 0.25rem);
-    flex-basis: calc(45% - 0.25rem);
-    padding: 1rem;
-  }
-
-  .classrooms-grid {
-    gap: 0.5rem;
-  }
-
-  .modal-content {
-    height: 90%;
-  }
-}
-
-/* --- NEW ALERT STYLES --- */
-.alert-popup {
-  position: fixed; /* Puts it on top of everything */
-  bottom: 20px;
-  right: 20px;
-  width: auto; /* Makes it shrink to fit content */
-  max-width: 350px; /* Keeps it from getting too wide */
-  z-index: 10000;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background-color: #28a745; /* Default success green */
-  color: white;
-
-  /* We use opacity for a simple fade */
-  animation: alertFadeIn 0.5s ease;
-}
-
-/* This class will be added by our JS for errors */
-.alert-popup.error {
-  background-color: #dc3545; /* Error red */
-}
-
-.alert-popup .alert-content {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-}
-
-.alert-popup .alert-content i {
-  font-size: 1.5rem;
-  margin-right: 1rem;
-}
-
-.alert-popup .alert-message p {
-  margin: 0 0 0.5rem 0;
-  font-weight: 500;
-}
-
-.alert-popup .alert-actions .alert-button {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-@keyframes alertFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* --- Classroom Details in Modal --- */
 .classroom-details {
   padding: 0 1.5rem 1rem;
   border-bottom: 1px solid #eee;
@@ -819,12 +754,923 @@ body {
   font-weight: 600;
 }
 
-/* --- History Section --- */
-#history-reservations .reservation-notification {
-  /* opacity: 0.8; */
+/* --- 3. ADMIN & FACILITY DASHBOARD STYLES --- */
+
+.header .admin-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.75rem;
+  font-family: "Montserrat", sans-serif;
 }
 
-/* --- Offline Banner (from old project) --- */
+.facility-user {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.admin-panel {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  align-self: flex-start;
+  position: sticky;
+  top: 90px;
+}
+
+.admin-section h3 {
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 1.2rem;
+  border-bottom: 2px solid #eaeaea;
+  padding-bottom: 0.75rem;
+}
+
+.control-panel {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.panel-header h2 {
+  color: #333;
+}
+
+.create-btn {
+  background-color: #4a6fdc;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.create-btn:hover {
+  background-color: #3a5db8;
+}
+
+.filter-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.filter-input,
+.filter-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #fff; /* Added for consistency */
+  font-family: "Montserrat", sans-serif;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-btn,
+.clear-filter-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+  flex: 1;
+  height: 47px; /* Align with inputs */
+}
+
+.primary-btn {
+  background-color: #4a6fdc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  height: 47px;
+  flex-shrink: 0;
+}
+.primary-btn:hover {
+  background-color: #3a5db8;
+}
+
+.secondary-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  height: 47px;
+  flex-shrink: 0;
+}
+.secondary-btn:hover {
+  background-color: #5a6268;
+}
+
+.filter-btn {
+  background-color: #28a745;
+  color: white;
+}
+.filter-btn:hover {
+  background-color: #218838;
+}
+
+.clear-filter-btn {
+  background-color: #f8f9fa;
+  color: #555;
+  border: 1px solid #ddd;
+}
+.clear-filter-btn:hover {
+  background-color: #e2e6ea;
+}
+
+/* --- Facility: KPI Cards --- */
+.kpi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem; /* Added margin */
+}
+
+.kpi-card {
+  background-color: white;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.07);
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.kpi-label {
+  color: #777;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.kpi.available .kpi-value {
+  color: #155724;
+}
+.kpi.cleaning .kpi-value {
+  color: #856404;
+} /* Changed to amber */
+.kpi.maintenance .kpi-value {
+  color: #721c24;
+}
+
+/* --- Facility: Room Grid --- */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(300px, 1fr)
+  ); /* Larger cards */
+  gap: 1.5rem;
+}
+
+.room-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Reduced gap */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+}
+.room-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
+}
+
+.room-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.room-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.room-meta {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-available {
+  background-color: #d4edda;
+  color: #155724;
+}
+.status-cleaning {
+  background-color: #fff3cd;
+  color: #856404;
+}
+.status-maintenance {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.utilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.utility-chip {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter 0.15s ease, transform 0.05s ease;
+  user-select: none;
+  text-transform: capitalize;
+}
+.utility-chip:active {
+  transform: scale(0.98);
+}
+
+.utility-working {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+} /* emerald */
+.utility-faulty {
+  background-color: #ffe4e6;
+  color: #9f1239;
+  border-color: #fecdd3;
+} /* rose */
+
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.status-btn {
+  padding: 0.5rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.status-btn:hover {
+  background: #f9fafb;
+}
+.status-btn.active {
+  background: #4a6fdc;
+  color: #fff;
+  border-color: #4a6fdc;
+}
+.status-btn h6 {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.8;
+  margin: 0;
+}
+
+.note-input-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Reduced gap */
+}
+
+.note-input {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.note-add-btn {
+  padding: 0.6rem 0.9rem;
+  background-color: #4a6fdc;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.note-add-btn:hover {
+  background-color: #3a5db8;
+}
+
+.note-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 150px; /* Add scroll */
+  overflow-y: auto;
+  padding-right: 5px; /* For scrollbar */
+}
+
+.note-item {
+  background-color: #f8f9fa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.note-time {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* --- 3. ADMIN DASHBOARD STYLES (SHARED WITH FACILITY) --- */
+
+.reservation-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-bottom: 4px solid #ddd;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  font-size: 1.8rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.stat-content {
+  text-align: left;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #777;
+  font-weight: 500;
+}
+
+.stat-card.pending {
+  border-color: #ffc107;
+}
+.stat-card.pending .stat-icon {
+  background-color: #ffc107;
+}
+
+.stat-card.approved {
+  border-color: #28a745;
+}
+.stat-card.approved .stat-icon {
+  background-color: #28a745;
+}
+
+.stat-card.denied {
+  border-color: #dc3545;
+}
+.stat-card.denied .stat-icon {
+  background-color: #dc3545;
+}
+
+.stat-card.total {
+  border-color: #17a2b8;
+}
+.stat-card.total .stat-icon {
+  background-color: #17a2b8;
+}
+
+.reservations-section,
+.classroom-status-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden; /* To contain table radius */
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.section-header h2 {
+  color: #333;
+  margin: 0;
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-button {
+  background-color: #f8f9fa;
+  color: #555;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.action-button:hover {
+  background-color: #e2e6ea;
+}
+
+.reservations-table-container,
+.classroom-status-table-container {
+  width: 100%;
+  overflow-x: auto; /* For mobile */
+}
+
+.reservations-table,
+.classroom-status-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reservations-table th,
+.reservations-table td,
+.classroom-status-table th,
+.classroom-status-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.reservations-table th,
+.classroom-status-table th {
+  font-weight: 600;
+  color: #555;
+  background-color: #f8f9fa;
+}
+
+.reservations-table td,
+.classroom-status-table td {
+  color: #333;
+}
+
+.reservations-table tbody tr:hover,
+.classroom-status-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.status-badge {
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+.status-badge.pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+.status-badge.approved {
+  background-color: #d4edda;
+  color: #155724;
+}
+.status-badge.denied {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+.status-badge.admin {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Facility Badges */
+.status-badge.good {
+  background-color: #d4edda;
+  color: #155724;
+}
+.status-badge.faulty {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.table-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4a6fdc;
+  font-size: 1rem;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activity-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.activity-icon.approved {
+  background-color: #28a745;
+}
+.activity-icon.denied {
+  background-color: #dc3545;
+}
+.activity-icon.created {
+  background-color: #4a6fdc;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-text {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+/* --- 4. GLOBAL MODAL & ALERT STYLES --- */
+
+/* This is the new, corrected .modal style */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* This makes it a pop-up */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem; /* Add padding for mobile */
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh; /* Add max-height */
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  color: #333;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.modal-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.modal-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.modal-input,
+.modal-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.modal-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.reserve-btn {
+  background-color: #4a6fdc;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+}
+
+.reserve-btn:hover {
+  background-color: #3a5db8;
+}
+
+.modal-info-group {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 0.25rem;
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-info-group.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  background: none;
+  padding: 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.approve-btn,
+.deny-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.approve-btn {
+  background-color: #28a745;
+  color: white;
+}
+.approve-btn:hover {
+  background-color: #218838;
+}
+
+.deny-btn {
+  background-color: #dc3545;
+  color: white;
+}
+.deny-btn:hover {
+  background-color: #c82333;
+}
+
+.confirm-modal {
+  display: none; /* Controlled by React state */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+}
+
+.confirm-modal-content {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.confirm-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.confirm-modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.confirm-modal-message {
+  margin-bottom: 1.5rem;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.confirm-cancel-btn {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
+  color: #555;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.confirm-cancel-btn:hover {
+  background-color: #e2e6ea;
+}
+
+.confirm-proceed-btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+.confirm-proceed-btn.approve {
+  background-color: #28a745;
+}
+.confirm-proceed-btn.deny {
+  background-color: #dc3545;
+}
+
+/* Facility Modal Styles */
+.modal-form-group .status-toggle {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.modal-form-group .status-toggle label {
+  font-weight: 500;
+  color: #555;
+}
+
+.modal-form-group .status-toggle input {
+  margin-right: 0.25rem;
+}
+
+.modal-form-group .note-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Global Offline Banner */
 .offline-banner {
   display: none; /* Hidden by default */
   background-color: #ffc;
@@ -845,4 +1691,221 @@ body {
 .offline-banner i {
   margin-right: 8px;
   color: #ad9a00;
+}
+
+/* Global Alert Pop-up */
+.alert-popup {
+  position: fixed; /* Puts it on top of everything */
+  bottom: 20px;
+  right: 20px;
+  width: auto; /* Makes it shrink to fit content */
+  max-width: 350px; /* Keeps it from getting too wide */
+  z-index: 10000;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: #28a745; /* Default success green */
+  color: white;
+  animation: alertFadeIn 0.5s ease;
+}
+
+.alert-popup.error {
+  background-color: #dc3545; /* Error red */
+}
+
+.alert-popup .alert-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+}
+
+.alert-popup .alert-content i {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+}
+
+.alert-popup .alert-message {
+  flex: 1; /* Make sure message flexes */
+}
+
+.alert-popup .alert-message p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.alert-popup .alert-actions {
+  margin-top: 0.5rem; /* Reduced margin */
+  text-align: left; /* Align to left under message */
+}
+
+.alert-popup .alert-actions .alert-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+@keyframes alertFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- 5. RESPONSIVE MEDIA QUERIES --- */
+
+/* Login page responsive */
+@media screen and (min-width: 600px) {
+  .container {
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 40%;
+  }
+
+  .form-container {
+    width: 60%;
+  }
+}
+
+/* Dashboard pages responsive */
+@media (max-width: 1200px) {
+  .dashboard-container {
+    grid-template-columns: 1fr;
+  }
+
+  .notifications-panel,
+  .admin-panel {
+    width: 100%;
+    position: static;
+    margin-top: 1.5rem;
+  }
+}
+
+/* For phones */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+    gap: 0.3rem;
+  }
+
+  .logout-btn {
+    margin-left: 0.2rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+  }
+
+  .user-details {
+    display: none; /* Hides user name on mobile */
+  }
+
+  /* Make facility user name smaller on mobile */
+  .facility-user {
+    font-size: 0.9rem;
+  }
+
+  .date-time-selector {
+    flex-direction: column;
+  }
+
+  .date-time-input {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .location-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .location-status {
+    margin-top: 0.5rem;
+  }
+
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .reservation-notification {
+    flex-direction: column;
+  }
+
+  .reservation-actions {
+    margin-top: 0.5rem;
+    align-self: flex-end;
+  }
+
+  .classrooms-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .classroom-card {
+    width: calc(50% - 0.5rem); /* Two cards per row */
+    flex-basis: calc(50% - 0.5rem);
+  }
+
+  /* Admin & Facility mobile */
+  .reservation-stats,
+  .kpi-cards {
+    grid-template-columns: 1fr 1fr; /* 2x2 grid for stats */
+  }
+  .filter-controls {
+    grid-template-columns: 1fr;
+  }
+  .filter-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .rooms-grid {
+    grid-template-columns: 1fr; /* Stack room cards on mobile */
+    gap: 1rem;
+  }
+
+  /* This makes the table scroll sideways on phones */
+  .reservations-table-container,
+  .classroom-status-table-container {
+    overflow-x: auto;
+  }
+  .reservations-table,
+  .classroom-status-table {
+    min-width: 600px; /* Force table to be wide */
+  }
+}
+
+/* For very small phones */
+@media (max-width: 400px) {
+  .classroom-card {
+    width: 100%; /* Stack cards */
+    flex-basis: 100%;
+    padding: 1rem;
+  }
 }

@@ -65,3 +65,15 @@ export async function deleteReservation(id) {
   if (!response.ok) throw new Error("Failed to delete reservation");
   return await response.json();
 }
+
+// --- ADD THIS FUNCTION TO THE BOTTOM of apiService.js ---
+
+export async function updateClassroom(id, classroomData) {
+  const response = await fetch(`${BASE_URL}/classrooms/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(classroomData),
+  });
+  if (!response.ok) throw new Error("Failed to update classroom");
+  return await response.json();
+}

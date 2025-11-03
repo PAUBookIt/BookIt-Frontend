@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_blue.css";
-import "./AdminDashboard.css"; // Make sure this CSS file has the styles from your old project
+import "../../index.css"; // <-- FIX THIS IMPORT
 
 // Import our services
 import * as api from "../../services/apiService";
@@ -166,19 +166,11 @@ function AdminDashboard() {
   }, []); // Run basic init once
 
   useEffect(() => {
-    // This runs when auth loading is done
-    if (!loading) {
-      if (!currentUser || currentUser.role !== "admin") {
-        // If auth is done and user is not admin, redirect
-        navigate("/login");
-        return;
-      }
-
-      // 4. Load initial data
+    // This runs when auth loading is done and user is guaranteed to be admin
+    if (!loading && currentUser) {
       loadData(currentUser); // Pass the user from auth
     }
-  }, [loading, currentUser, navigate, loadData]); // Re-run if auth state changes
-
+  }, [loading, currentUser, loadData]); // Re-run if auth state changes
   const handleApplyFilters = () => {
     const date = document.getElementById("date-filter")._flatpickr.input.value;
     applyFilters(reservations, statusFilter, date, locationFilter);
