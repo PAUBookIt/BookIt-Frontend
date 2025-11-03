@@ -253,7 +253,12 @@ const Login = () => {
           </div>
 
           <div className="input-group">
+<<<<<<< HEAD
             <label htmlFor="login-password">Password</label>
+=======
+                         <label htmlFor="login-password">Password</label>
+                       {" "}
+>>>>>>> 2e9f7980f05fea956569eccefed26bb5f2d95c4d
             <input
               type="password"
               id="login-password"
