@@ -42,8 +42,10 @@ function transformStorageRooms(data) {
   for (const building in data) {
     // Loop through rooms in that location
     data[building].forEach((room) => {
+      // --- THIS WAS THE FIX ---
       // Add the building property to the room object
       allRooms.push({ ...room, building: building });
+      // --- END FIX ---
 
       // Create the state entry for the room
       roomsState[room.id] = {
@@ -407,9 +409,7 @@ export default function FacilityDashboard() {
                   className="filter-select"
                 >
                   <option value="ALL">All Issues</option>
-                  {/* --- THIS IS THE FIX --- */}
                   <option value="MAINTENANCE">Maintenance</option>
-                  {/* --- END FIX --- */}
                   <option value="PROJECTOR">Projector Faulty</option>
                   <option value="AC">A/C Faulty</option>
                   <option value="POWER">Power Faulty</option>
@@ -442,6 +442,7 @@ export default function FacilityDashboard() {
               style={{ borderColor: "#28a745" }}
               onClick={() => {
                 setIssueFilter("ALL");
+                // You could also make this filter by "Available" if you add it to the dropdown
               }}
             >
               <div>
@@ -452,7 +453,7 @@ export default function FacilityDashboard() {
             <div
               className="kpi-card kpi cleaning"
               style={{ borderColor: "#ffc107" }}
-              onClick={() => setIssueFilter("ALL")}
+              onClick={() => setIssueFilter("ALL")} // Clicks do nothing yet
             >
               <div className="kpi-value" style={{ color: "#856404" }}>
                 {counts.CLEANING}

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/logo.jpeg";
-import "../../index.css"; // Import global CSS
+import "../../index.css"; // Use the global CSS
 
 // Default users for development phase
 const DEFAULT_USERS = [
@@ -166,6 +166,7 @@ const Login = () => {
         localStorage.setItem("authToken", defaultAuth.access_token);
         localStorage.setItem("currentUser", JSON.stringify(defaultAuth.user));
         await login(defaultAuth.user);
+
         setMessage({
           text: "Login successful (Dev Mode)! Redirecting to dashboard...",
           type: "success",
@@ -230,6 +231,8 @@ const Login = () => {
               Admin: admin@pau.edu.ng / Admin123
               <br />
               Student: student@pau.edu.ng / Student123
+              <br />
+              Facility: facility@pau.edu.ng / Facility123
             </div>
           )}
         </div>
@@ -253,12 +256,7 @@ const Login = () => {
           </div>
 
           <div className="input-group">
-<<<<<<< HEAD
             <label htmlFor="login-password">Password</label>
-=======
-                         <label htmlFor="login-password">Password</label>
-                       {" "}
->>>>>>> 2e9f7980f05fea956569eccefed26bb5f2d95c4d
             <input
               type="password"
               id="login-password"
@@ -284,8 +282,6 @@ const Login = () => {
               </a>
             </div>
           </div>
-
-          {/* THE EXTRA </div> TAG IS GONE FROM HERE. */}
 
           <button type="submit" className="submit-btn" disabled={isLoading}>
             {isLoading ? "Logging in..." : "Log In"}
