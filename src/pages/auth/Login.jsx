@@ -1,56 +1,15 @@
+// src/pages/auth/Login.jsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+// We use our centralized API service now (which has the 15s timeout fix)
+import * as api from "../../services/apiService";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/logo.jpeg";
 import "../../index.css";
 
-// Default users for development phase
-const DEFAULT_USERS = [
-  {
-    id: 1,
-    email: "admin@pau.edu.ng",
-    password: "Admin123",
-    firstName: "Admin",
-    lastName: "User",
-    role: "admin",
-    studentId: "ADM12345",
-    isActive: true,
-  },
-  {
-    id: 2,
-    email: "student@pau.edu.ng",
-    password: "Student123",
-    firstName: "John",
-    lastName: "Doe",
-    role: "student",
-    studentId: "STU12345",
-    isActive: true,
-  },
-  {
-    id: 3,
-    email: "jane.smith@pau.edu.ng",
-    password: "Student456",
-    firstName: "Jane",
-    lastName: "Smith",
-    role: "student",
-    studentId: "STU12346",
-    isActive: true,
-  },
-  {
-    id: 4,
-    email: "facility@pau.edu.ng",
-    password: "Facility123",
-    firstName: "Facility",
-    lastName: "Staff",
-    role: "facility",
-    studentId: "FAC12345",
-    isActive: true,
-  },
-];
-
 /**
- * Login Component
+ * Login Component - STRICT MODE (No Fake Users)
  */
 const Login = () => {
   // State for form inputs and errors
@@ -59,7 +18,6 @@ const Login = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
-  const [isDevMode, setIsDevMode] = useState(false);
 
   // Get authentication context and navigation
   const { login } = useAuth();
@@ -80,115 +38,63 @@ const Login = () => {
   };
 
   /**
-   * Authenticate with default users (dev mode)
-   */
-  const authenticateWithDefaults = (email, password) => {
-    const user = DEFAULT_USERS.find(
-      (u) => u.email === email && u.password === password
-    );
-    if (user) {
-      return {
-        access_token: `dev_token_${user.id}_${Date.now()}`,
-        user: { ...user, isDevMode: true },
-      };
-    }
-    return null;
-  };
-
-  /**
    * Handle form submission
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
     setMessage({ text: "", type: "" });
+
     if (!validateEmail(email)) {
       return;
     }
+
     setIsLoading(true);
+
     try {
-      // Prepare login data
-      const loginData = {
+      // 1. ATTEMPT REAL BACKEND LOGIN
+      // This uses the new 15-second timeout from apiService.js
+      const data = await api.login({
         email: email.toLowerCase().trim(),
         password: password,
-      };
+      });
 
-      if (!loginData.email || !loginData.password) {
-        setIsLoading(false);
-        setMessage({
-          text: "Please provide both email and password.",
-          type: "error",
-        });
-        return;
-      }
+      // 2. IF SUCCESSFUL:
+      const { access_token: token, user } = data;
 
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/login`,
-        loginData,
-        {
-          headers: { "Content-Type": "application/json" },
-          timeout: 3000, // Add a 3-second timeout
-        }
-      );
-
-      setIsLoading(false);
-      const { access_token: token, user } = response.data;
+      // Save to local storage
       localStorage.setItem("authToken", token);
       localStorage.setItem("currentUser", JSON.stringify(user));
+
+      // Update Auth Context
       await login(user);
 
-      console.log("Backend login successful:", response.data);
+      console.log("Login successful:", user.role);
       setMessage({
-        text: "Login successful! Redirecting to dashboard...",
+        text: "Login successful! Redirecting...",
         type: "success",
       });
 
+      // Redirect based on role
       const targetPath =
         user.role === "admin"
           ? "/admin"
           : user.role === "facility"
           ? "/facility"
           : "/dashboard";
+
       setTimeout(() => {
         navigate(targetPath);
-      }, 1500);
+      }, 1000);
     } catch (error) {
-      console.error("Backend login error:", error);
-      console.warn(
-        "Backend authentication failed, trying default users...",
-        error.message
-      );
+      console.error("Login failed:", error);
+      setIsLoading(false);
 
-      const defaultAuth = authenticateWithDefaults(email, password);
-
-      if (defaultAuth) {
-        setIsLoading(false);
-        setIsDevMode(true);
-        localStorage.setItem("authToken", defaultAuth.access_token);
-        localStorage.setItem("currentUser", JSON.stringify(defaultAuth.user));
-        await login(defaultAuth.user);
-
-        setMessage({
-          text: "Login successful (Dev Mode)! Redirecting to dashboard...",
-          type: "success",
-        });
-
-        const targetPath =
-          defaultAuth.user.role === "admin"
-            ? "/admin"
-            : defaultAuth.user.role === "facility"
-            ? "/facility"
-            : "/dashboard";
-        setTimeout(() => {
-          navigate(targetPath);
-        }, 1500);
-      } else {
-        setIsLoading(false);
-        setMessage({
-          text: "Invalid credentials. Try default accounts for dev mode.",
-          type: "error",
-        });
-      }
+      // SHOW THE REAL ERROR (No falling back to fake users)
+      setMessage({
+        text: error.message || "Connection failed. Please check your backend.",
+        type: "error",
+      });
     }
   };
 
@@ -216,24 +122,6 @@ const Login = () => {
         <div className="sidebar-content">
           <h1>Welcome!</h1>
           <p>Book a class in Pan-Atlantic University's SST or TYD.</p>
-          {isDevMode && (
-            <div
-              style={{
-                marginTop: "1rem",
-                padding: "0.5rem",
-                backgroundColor: "#e8f4fd",
-                borderRadius: "4px",
-                fontSize: "0.8rem",
-                border: "1px solid #bee5eb",
-              }}
-            >
-              <strong>Dev Mode Active</strong>
-              <br />
-              Admin: admin@pau.edu.ng / Admin123
-              <br />
-              Student: student@pau.edu.ng / Student123
-            </div>
-          )}
         </div>
       </div>
       <div className="form-container">

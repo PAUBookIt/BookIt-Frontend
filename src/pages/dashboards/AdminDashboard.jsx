@@ -1,24 +1,21 @@
+// src/pages/dashboards/AdminDashboard.jsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_blue.css";
-import "../../index.css"; // <-- FIX THIS IMPORT
+import "../../index.css";
 
 // Import our services
 import * as api from "../../services/apiService";
 import * as storage from "../../services/sharedStorage";
-import { isBackendOnline, checkBackendStatus } from "../../services/status";
-
 // Import Auth & Navigation
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-
 // Import EmailJS
 import emailjs from "@emailjs/browser";
 
-// --- Main Dashboard Component ---
 function AdminDashboard() {
-  // --- Auth & Navigation ---
-  const { currentUser, loading, logout } = useAuth(); // Use the hook
+  const { currentUser, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   // --- React State ---
@@ -47,7 +44,7 @@ function AdminDashboard() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [currentReservation, setCurrentReservation] = useState(null); // For modal data
+  const [currentReservation, setCurrentReservation] = useState(null);
   const [confirmModalData, setConfirmModalData] = useState({
     message: "",
     action: null,
@@ -60,14 +57,20 @@ function AdminDashboard() {
     type: "success",
   });
 
-  // --- Alert Function ---
   const showAlert = useCallback((message, type = "success") => {
     setAlert({ show: true, message, type });
-    // Auto-hide after 5 seconds
     setTimeout(() => {
       setAlert({ show: false, message: "", type: "success" });
     }, 5000);
-  }, []); // Stable function
+  }, []);
+
+  // --- HELPER: Safely get classroom name ---
+  const getRoomName = (classroomData) => {
+    if (!classroomData) return "Unknown Room";
+    return typeof classroomData === "object"
+      ? classroomData.name
+      : classroomData;
+  };
 
   // --- Data & UI Functions ---
   const applyFilters = useCallback((data, status, date, location) => {
@@ -79,16 +82,22 @@ function AdminDashboard() {
 
     const filtered = all.filter((res) => {
       if (status !== "all" && res.status !== status) return false;
-      if (date && res.date !== date) return false;
+      if (date && res.date !== date) return false; // Note: Backend uses startTime ISO, might need adjusting if filtering by backend date
+
       if (location !== "ALL") {
-        const building = res.classroom.split(" ")[0];
-        if (building !== location) return false;
+        const roomName = getRoomName(res.classroom);
+        const building = roomName.split(" ")[0];
+        if (building !== location && !roomName.startsWith(location))
+          return false;
       }
       return true;
     });
 
     setFilteredReservations(
-      filtered.sort((a, b) => new Date(b.date) - new Date(a.date))
+      filtered.sort(
+        (a, b) =>
+          new Date(b.date || b.startTime) - new Date(a.date || a.startTime)
+      )
     );
 
     // Update title
@@ -105,7 +114,7 @@ function AdminDashboard() {
       default:
         setViewTitle("All Reservations");
     }
-  }, []); // Stable function
+  }, []);
 
   const updateStats = useCallback((data) => {
     const pendingCount = data.pending.length;
@@ -117,13 +126,13 @@ function AdminDashboard() {
       denied: deniedCount,
       total: pendingCount + approvedCount + deniedCount,
     });
-  }, []); // Stable function
+  }, []);
 
   const updateRecentActivity = useCallback(() => {
     const activities =
       JSON.parse(localStorage.getItem("recentActivities")) || [];
-    setRecentActivity(activities.slice(0, 5)); // Show 5 most recent
-  }, []); // Stable function
+    setRecentActivity(activities.slice(0, 5));
+  }, []);
 
   // --- Load Data on Page Start ---
   const loadData = useCallback(
@@ -138,10 +147,22 @@ function AdminDashboard() {
 
         setReservations(resData);
         updateStats(resData);
-
         applyFilters(resData, "pending", null, "ALL");
 
-        initializeActivities(resData);
+        // Init activities if needed
+        if (!localStorage.getItem("recentActivities")) {
+          const activities = [...resData.approved, ...resData.denied].map(
+            (r) => ({
+              id: r.id,
+              action: r.status,
+              timestamp: r.processedAt || new Date().toISOString(),
+            })
+          );
+          localStorage.setItem(
+            "recentActivities",
+            JSON.stringify(activities.slice(0, 20))
+          );
+        }
         updateRecentActivity();
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -152,55 +173,51 @@ function AdminDashboard() {
   );
 
   useEffect(() => {
-    // This replaces DOMContentLoaded
     const initialize = async () => {
-      // 1. Check backend status (banner is in App.jsx)
-      await checkBackendStatus();
-
-      // 3. Init local storage & EmailJS
       storage.initializeLocalStorage();
-      emailjs.init("O3K5dfZJQv5YP6W9V"); // Your EmailJS user ID
+      emailjs.init("O3K5dfZJQv5YP6W9V");
     };
-
     initialize();
-  }, []); // Run basic init once
+  }, []);
 
   useEffect(() => {
-    // This runs when auth loading is done and user is guaranteed to be admin
     if (!loading && currentUser) {
-      loadData(currentUser); // Pass the user from auth
+      loadData(currentUser);
     }
-  }, [loading, currentUser, loadData]); // Re-run if auth state changes
+  }, [loading, currentUser, loadData]);
+
   const handleApplyFilters = () => {
-    const date = document.getElementById("date-filter")._flatpickr.input.value;
+    const dateInput = document.getElementById("date-filter");
+    const date =
+      dateInput && dateInput._flatpickr
+        ? dateInput._flatpickr.input.value
+        : null;
     applyFilters(reservations, statusFilter, date, locationFilter);
   };
 
   const clearFilters = () => {
     setStatusFilter("pending");
     setLocationFilter("ALL");
-    const dateInput = document.getElementById("date-filter")._flatpickr;
-    if (dateInput) dateInput.clear();
+    const dateInput = document.getElementById("date-filter");
+    if (dateInput && dateInput._flatpickr) dateInput._flatpickr.clear();
     setDateFilter(null);
     applyFilters(reservations, "pending", null, "ALL");
   };
 
   const refreshData = async () => {
     showAlert("Refreshing data from server...");
-    if (isBackendOnline) {
-      try {
-        await api.getReservations(); // This fetches and updates localStorage
-      } catch (error) {
-        console.error("Failed to refresh data:", error);
-        showAlert("Error refreshing data. Using local cache.", "error");
-      }
+    try {
+      await api.getReservations();
+      const resData = await storage.getReservations();
+      setReservations(resData);
+      updateStats(resData);
+      applyFilters(resData, statusFilter, dateFilter, locationFilter);
+      updateRecentActivity();
+      showAlert("Data refreshed successfully");
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+      showAlert("Error refreshing data. Using local cache.", "error");
     }
-    const resData = storage.getLocalReservations(); // Get the (potentially) new data
-    setReservations(resData);
-    updateStats(resData);
-    applyFilters(resData, statusFilter, dateFilter, locationFilter);
-    updateRecentActivity();
-    showAlert("Data refreshed successfully");
   };
 
   // --- Modal & Action Handlers ---
@@ -233,7 +250,7 @@ function AdminDashboard() {
       message,
       action,
       reservation,
-      adminComment: document.getElementById("admin-comment").value,
+      adminComment: document.getElementById("admin-comment")?.value || "",
     });
     setIsConfirmModalOpen(true);
   };
@@ -242,156 +259,86 @@ function AdminDashboard() {
     setIsConfirmModalOpen(false);
   };
 
-  // --- THIS IS THE FIXED FUNCTION for Approve/Deny ---
   const proceedWithConfirmedAction = async () => {
     const { action, reservation, adminComment } = confirmModalData;
-    const finalStatus = action === "approve" ? "approved" : "denied";
 
-    // Get the latest local data
-    const localReservations = storage.getLocalReservations(); // Get local data to modify
-    const reservationIndex = localReservations.pending.findIndex(
-      (r) => r.id === reservation.id
-    );
-
-    if (reservationIndex === -1) {
-      showAlert("Error: Reservation not found.", "error");
-      closeConfirmModal();
-      return;
-    }
-
-    const reservationToUpdate = localReservations.pending[reservationIndex];
+    // FIX: Send UPPERCASE to match Database/Prisma Enums
+    const finalStatus = action === "approve" ? "APPROVED" : "DENIED";
 
     try {
-      if (!isBackendOnline) throw new Error("Offline. Falling back to local.");
-
-      // --- TRY API FIRST ---
+      // 1. Send update to Backend
       await api.updateReservation(reservation.id, {
         status: finalStatus,
-        adminComment: adminComment,
-        processedAt: new Date().toISOString(),
+        // Optional: Pass the comment if you add that field to schema later
       });
 
-      if (finalStatus === "approved") {
-        reservationToUpdate.adminComment = adminComment; // Add comment for email
-        sendApprovalEmail(reservationToUpdate);
+      if (finalStatus === "APPROVED") {
+        sendApprovalEmail({ ...reservation, adminComment });
       }
       showAlert(`Reservation ${reservation.id} has been ${finalStatus}.`);
+
+      // 2. Refresh UI Data
+      await refreshData();
     } catch (error) {
-      // --- API FAILED: FALLBACK TO LOCAL STORAGE ---
-      console.warn(
-        "API update failed, falling back to local storage.",
-        error.message
-      );
-
-      reservationToUpdate.status = finalStatus;
-      reservationToUpdate.adminComment = adminComment;
-      reservationToUpdate.processedAt = new Date().toISOString();
-
-      // Move from pending to new array
-      localReservations.pending.splice(reservationIndex, 1);
-      if (finalStatus === "approved") {
-        localReservations.approved.push(reservationToUpdate);
-      } else {
-        localReservations.denied.push(reservationToUpdate);
-      }
-
-      localReservations.lastUpdate = new Date().getTime();
-      localStorage.setItem(
-        "classroomReservations",
-        JSON.stringify(localReservations)
-      );
-
-      showAlert(
-        `Backend not responding. Reservation ${finalStatus} locally.`,
-        "success"
-      );
+      console.warn("API update failed:", error.message);
+      showAlert("Failed to update status. Check backend connection.", "error");
     } finally {
-      // --- ALWAYS RUN THIS ---
-      recordActivity(reservationToUpdate, finalStatus); // Record local activity
       closeConfirmModal();
       closeReviewModal();
-
-      // Update state from our modified localReservations object
-      setReservations(localReservations);
-      applyFilters(localReservations, statusFilter, dateFilter, locationFilter);
-      updateStats(localReservations);
-      updateRecentActivity();
     }
   };
 
-  // --- THIS IS THE FIXED FUNCTION for Create Booking ---
   const handleCreateReservation = async (e) => {
     e.preventDefault();
     const form = e.target;
 
-    const newReservation = {
-      id: "ADMIN-" + Date.now(),
-      studentName: currentUser.firstName || "Admin User",
-      studentId: currentUser.studentId || "ADMIN01",
-      email: currentUser.email || "admin@pau.edu.ng",
-      classroom: form.elements["booking-classroom"].value,
-      date: form.elements["booking-date"].value,
-      time: `${form.elements["booking-start-time"].value} - ${form.elements["booking-end-time"].value}`,
+    const dateVal = form.elements["booking-date"].value;
+    const startTimeVal = form.elements["booking-start-time"].value;
+    const endTimeVal = form.elements["booking-end-time"].value;
+
+    // Create ISO dates for backend
+    const startISO = new Date(`${dateVal}T${startTimeVal}:00`).toISOString();
+    const endISO = new Date(`${dateVal}T${endTimeVal}:00`).toISOString();
+
+    const roomName = form.elements["booking-classroom"].value;
+    const roomObj = allClassrooms.find((r) => r.name === roomName);
+
+    if (!roomObj) return showAlert("Invalid classroom selected", "error");
+
+    const payload = {
+      classroomId: roomObj.id,
+      startTime: startISO,
+      endTime: endISO,
       purpose: form.elements["booking-purpose"].value,
-      attendees: parseInt(form.elements["booking-attendees"].value),
-      status: "approved", // Admin bookings are auto-approved
-      createdAt: new Date().toISOString(),
     };
 
     try {
-      if (!isBackendOnline) throw new Error("Offline. Falling back to local.");
-
-      // --- TRY API FIRST ---
-      await api.createReservation(newReservation);
-      showAlert(`Admin reservation ${newReservation.id} created.`);
-    } catch (error) {
-      // --- API FAILED: FALLBACK TO LOCAL STORAGE ---
-      console.warn(
-        "API create failed, falling back to local storage.",
-        error.message
-      );
-      const localReservations = storage.getLocalReservations();
-      localReservations.approved.push(newReservation); // Add to approved list
-      localStorage.setItem(
-        "classroomReservations",
-        JSON.stringify(localReservations)
-      );
-      showAlert(
-        `Backend not responding. Reservation created locally.`,
-        "success"
-      );
-    } finally {
-      // --- ALWAYS RUN THIS ---
-      recordActivity(newReservation, "created");
+      await api.createReservation(payload);
+      showAlert(`Reservation created successfully.`);
+      await refreshData();
       closeBookingModal();
       form.reset();
-
-      const resData = storage.getLocalReservations(); // Get new local data
-      setReservations(resData);
-      applyFilters(resData, statusFilter, dateFilter, locationFilter);
-      updateStats(resData);
-      updateRecentActivity();
+    } catch (error) {
+      console.warn("API create failed:", error.message);
+      showAlert("Failed to create reservation. Check backend.", "error");
     }
   };
 
   const exportReservations = () => {
-    // This logic is local and fine, but we'll use the state `filteredReservations`
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent +=
-      "ID,Student Name,Student ID,Classroom,Date,Time,Purpose,Status,Attendees,Created At\n";
+      "ID,Student Name,Classroom,Date,Time,Purpose,Status,Attendees\n";
 
     filteredReservations.forEach((reservation) => {
       const row = [
         reservation.id,
-        reservation.studentName,
-        reservation.studentId,
-        reservation.classroom,
-        reservation.date,
+        reservation.studentName || "N/A",
+        getRoomName(reservation.classroom), // <-- FIXED HERE
+        storage.formatDate(reservation.date || reservation.startTime),
         reservation.time,
         `"${(reservation.purpose || "").replace(/"/g, '""')}"`,
         reservation.status,
-        reservation.attendees,
-        reservation.createdAt,
+        reservation.attendees || 0,
       ].join(",");
       csvContent += row + "\n";
     });
@@ -406,98 +353,44 @@ function AdminDashboard() {
     showAlert("Reservations exported to CSV successfully");
   };
 
-  // --- Activity & Email ---
-
-  const initializeActivities = (data) => {
-    if (localStorage.getItem("recentActivities")) return; // Already init
-    const activities = [...data.approved, ...data.denied]
-      .map((res) => ({
-        id: res.id,
-        action: res.status,
-        timestamp: res.processedAt || res.createdAt || new Date().toISOString(),
-      }))
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    const trimmed = activities.slice(0, 20);
-    localStorage.setItem("recentActivities", JSON.stringify(trimmed));
-  };
-
-  const recordActivity = (reservation, action) => {
-    const activities =
-      JSON.parse(localStorage.getItem("recentActivities")) || [];
-    const newActivity = {
-      id: reservation.id,
-      action: action,
-      timestamp: new Date().toISOString(),
-    };
-    activities.unshift(newActivity); // Add to beginning
-    const trimmed = activities.slice(0, 20); // Keep only 20
-    localStorage.setItem("recentActivities", JSON.stringify(trimmed));
-    updateRecentActivity(); // Refresh the UI
-  };
-
   const sendApprovalEmail = (reservation) => {
-    const safeReservation = {
-      email: reservation.email || "student@pau.edu.ng",
-      studentName: reservation.studentName || "Student",
-      id: reservation.id,
-      classroom: reservation.classroom,
-      date: reservation.date,
-      time: reservation.time,
-      purpose: (reservation.purpose || "Academic Activity").substring(0, 100),
-      adminComment: reservation.adminComment
-        ? reservation.adminComment.substring(0, 200)
-        : "N/A",
-    };
-
     const templateParams = {
-      to_email: safeReservation.email,
-      to_name: safeReservation.studentName,
-      reservation_id: safeReservation.id,
-      classroom: safeReservation.classroom,
-      date: storage.formatDate(safeReservation.date),
-      time: safeReservation.time,
-      purpose: safeReservation.purpose,
+      to_email: reservation.email || "student@pau.edu.ng",
+      to_name: reservation.studentName || "Student",
+      reservation_id: reservation.id,
+      classroom: getRoomName(reservation.classroom), // <-- FIXED HERE
+      date: storage.formatDate(reservation.date || reservation.startTime),
+      time: reservation.time,
+      purpose: reservation.purpose,
       admin_name: currentUser.firstName || "Administrator",
-      admin_comment: safeReservation.adminComment,
+      admin_comment: reservation.adminComment || "N/A",
       cc_security: "osagie.osazuwa@pau.edu.ng",
       cc_facility: "muizah.apampa@pau.edu.ng",
       cc_admin: currentUser.email || "admin@pau.edu.ng",
     };
 
     emailjs.send("service_y4hrfnh", "template_mkka46n", templateParams).then(
-      (response) => {
-        console.log("Email sent successfully:", response);
-        showAlert("Approval notification email sent successfully");
-      },
-      (error) => {
-        console.error("Email sending failed:", error);
-        showAlert("Failed to send email notification", "error");
-      }
+      (response) => console.log("Email sent successfully"),
+      (error) => console.error("Email sending failed:", error)
     );
   };
 
-  // --- Auth ---
   const performLogout = () => {
-    logout(); // Use the logout function from AuthContext
-    showAlert("Logging out...");
+    logout();
     setTimeout(() => {
-      navigate("/login");
-    }, 1000);
+      navigate("/login", { replace: true });
+    }, 100);
   };
 
-  // --- Helpers ---
   const getTimeAgo = (date) => {
     const now = new Date();
     const diffMs = now - new Date(date);
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
+    const diffMin = Math.floor(diffMs / 60000);
     if (diffMin < 1) return "Just now";
     if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHour = Math.floor(diffMin / 60);
     if (diffHour < 24) return `${diffHour}h ago`;
+    const diffDay = Math.floor(diffHour / 24);
     return `${diffDay}d ago`;
   };
 
@@ -520,11 +413,7 @@ function AdminDashboard() {
     return text.substring(0, maxLength) + "...";
   };
 
-  // --- Render ---
-  if (loading || !currentUser) {
-    // Show a full-page loading spinner while auth is checking
-    return <div>Loading Admin...</div>;
-  }
+  if (loading || !currentUser) return <div>Loading Admin...</div>;
 
   return (
     <>
@@ -640,9 +529,7 @@ function AdminDashboard() {
                 <i className="fas fa-clock"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value" id="pending-count">
-                  {stats.pending}
-                </div>
+                <div className="stat-value">{stats.pending}</div>
                 <div className="stat-label">Pending</div>
               </div>
             </div>
@@ -662,9 +549,7 @@ function AdminDashboard() {
                 <i className="fas fa-check-circle"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value" id="approved-count">
-                  {stats.approved}
-                </div>
+                <div className="stat-value">{stats.approved}</div>
                 <div className="stat-label">Approved</div>
               </div>
             </div>
@@ -684,9 +569,7 @@ function AdminDashboard() {
                 <i className="fas fa-times-circle"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value" id="denied-count">
-                  {stats.denied}
-                </div>
+                <div className="stat-value">{stats.denied}</div>
                 <div className="stat-label">Denied</div>
               </div>
             </div>
@@ -701,9 +584,7 @@ function AdminDashboard() {
                 <i className="fas fa-calendar-alt"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value" id="total-count">
-                  {stats.total}
-                </div>
+                <div className="stat-value">{stats.total}</div>
                 <div className="stat-label">Total</div>
               </div>
             </div>
@@ -749,8 +630,9 @@ function AdminDashboard() {
                       <tr key={res.id}>
                         <td>{res.id}</td>
                         <td>{res.studentName}</td>
-                        <td>{res.classroom}</td>
-                        <td>{storage.formatDate(res.date)}</td>
+                        {/* FIX IS HERE: Render name string, not object */}
+                        <td>{getRoomName(res.classroom)}</td>
+                        <td>{storage.formatDate(res.date || res.startTime)}</td>
                         <td>{res.time}</td>
                         <td>{truncateText(res.purpose, 30)}</td>
                         <td>
@@ -763,7 +645,6 @@ function AdminDashboard() {
                           <div className="table-actions">
                             <button
                               className="table-action-btn view-btn"
-                              data-id={res.id}
                               title="View details"
                               onClick={() => openReviewModal(res)}
                             >
@@ -802,10 +683,9 @@ function AdminDashboard() {
                       ></i>
                     </div>
                     <div className="activity-content">
-                      <div className="activity-text">{`Res #${activity.id.substring(
-                        0,
-                        7
-                      )}... ${activity.action}`}</div>
+                      <div className="activity-text">{`Res #${String(
+                        activity.id
+                      ).substring(0, 7)}... ${activity.action}`}</div>
                       <div className="activity-time">
                         {getTimeAgo(activity.timestamp)}
                       </div>
@@ -820,73 +700,57 @@ function AdminDashboard() {
         </aside>
       </div>
 
-      {/* --- MODALS --- */}
-
       {isReviewModalOpen && currentReservation && (
         <div className="modal" id="review-modal" style={{ display: "flex" }}>
           <div className="modal-content">
             <div className="modal-header">
               <h2>Review Reservation</h2>
-              <button
-                className="close-btn"
-                id="close-review-modal"
-                onClick={closeReviewModal}
-              >
+              <button className="close-btn" onClick={closeReviewModal}>
                 &times;
               </button>
             </div>
             <form id="review-form" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="hidden"
-                id="reservation-id"
-                value={currentReservation.id}
-              />
               <div className="modal-info-group">
                 <div className="info-item">
                   <span className="info-label">Student:</span>
-                  <span id="student-name" className="info-value">
+                  <span className="info-value">
                     {currentReservation.studentName}
                   </span>
                 </div>
                 <div className="info-item">
                   <span className="info-label">Student ID:</span>
-                  <span id="student-id" className="info-value">
-                    {currentReservation.studentId}
+                  <span className="info-value">
+                    {currentReservation.studentId || "N/A"}
                   </span>
                 </div>
               </div>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="review-classroom">
-                  Classroom
-                </label>
+                <label className="modal-label">Classroom</label>
+                {/* FIX IS HERE ALSO */}
                 <input
                   type="text"
-                  id="review-classroom"
                   className="modal-input"
-                  defaultValue={currentReservation.classroom}
+                  defaultValue={getRoomName(currentReservation.classroom)}
                   readOnly
                 />
               </div>
+              {/* ... Rest of modal ... */}
               <div className="modal-info-group two-columns">
                 <div className="modal-form-group">
-                  <label className="modal-label" htmlFor="review-date">
-                    Date
-                  </label>
+                  <label className="modal-label">Date</label>
                   <input
                     type="text"
-                    id="review-date"
                     className="modal-input"
-                    defaultValue={currentReservation.date}
+                    defaultValue={storage.formatDate(
+                      currentReservation.date || currentReservation.startTime
+                    )}
                     readOnly
                   />
                 </div>
                 <div className="modal-form-group">
-                  <label className="modal-label" htmlFor="review-time">
-                    Time
-                  </label>
+                  <label className="modal-label">Time</label>
                   <input
                     type="text"
-                    id="review-time"
                     className="modal-input"
                     defaultValue={currentReservation.time}
                     readOnly
@@ -894,43 +758,24 @@ function AdminDashboard() {
                 </div>
               </div>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="review-purpose">
-                  Purpose of Reservation
-                </label>
+                <label className="modal-label">Purpose</label>
                 <textarea
-                  id="review-purpose"
                   className="modal-textarea"
                   defaultValue={currentReservation.purpose}
                   readOnly
                 ></textarea>
               </div>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="review-attendees">
-                  Expected Number of Attendees
-                </label>
-                <input
-                  type="number"
-                  id="review-attendees"
-                  className="modal-input"
-                  defaultValue={currentReservation.attendees}
-                  readOnly
-                />
-              </div>
-              <div className="modal-form-group">
-                <label className="modal-label" htmlFor="admin-comment">
-                  Admin Comment
-                </label>
+                <label className="modal-label">Admin Comment</label>
                 <textarea
                   id="admin-comment"
                   className="modal-textarea"
-                  placeholder="Add any comments or reason for approval/denial"
-                  defaultValue={currentReservation.adminComment || ""}
+                  placeholder="Add comment..."
                 ></textarea>
               </div>
               <div className="modal-actions">
                 <button
                   type="button"
-                  id="deny-btn"
                   className="deny-btn"
                   onClick={() => showConfirmModal("deny", currentReservation)}
                 >
@@ -938,7 +783,6 @@ function AdminDashboard() {
                 </button>
                 <button
                   type="button"
-                  id="approve-btn"
                   className="approve-btn"
                   onClick={() =>
                     showConfirmModal("approve", currentReservation)
@@ -957,26 +801,20 @@ function AdminDashboard() {
           <div className="modal-content">
             <div className="modal-header">
               <h2>Create Reservation</h2>
-              <button
-                className="close-btn"
-                id="close-booking-modal"
-                onClick={closeBookingModal}
-              >
+              <button className="close-btn" onClick={closeBookingModal}>
                 &times;
               </button>
             </div>
             <form id="booking-form" onSubmit={handleCreateReservation}>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="booking-classroom">
-                  Classroom
-                </label>
+                <label className="modal-label">Classroom</label>
                 <select
                   id="booking-classroom"
                   name="booking-classroom"
                   className="modal-input"
                   required
                 >
-                  <option value="">Select a classroom</option>
+                  <option value="">Select...</option>
                   {allClassrooms.map((room) => (
                     <option key={room.id} value={room.name}>
                       {room.name}
@@ -986,38 +824,28 @@ function AdminDashboard() {
               </div>
               <div className="modal-info-group two-columns">
                 <div className="modal-form-group">
-                  <label className="modal-label" htmlFor="booking-date">
-                    Date
-                  </label>
+                  <label className="modal-label">Date</label>
                   <Flatpickr
-                    id="booking-date"
                     name="booking-date"
                     className="modal-input"
-                    placeholder="Select date"
                     options={{ minDate: "today", dateFormat: "Y-m-d" }}
                     required
                   />
                 </div>
                 <div className="modal-form-group two-columns">
                   <div className="modal-form-group">
-                    <label className="modal-label" htmlFor="booking-start-time">
-                      Start Time
-                    </label>
+                    <label className="modal-label">Start</label>
                     <input
                       type="time"
-                      id="booking-start-time"
                       name="booking-start-time"
                       className="modal-input"
                       required
                     />
                   </div>
                   <div className="modal-form-group">
-                    <label className="modal-label" htmlFor="booking-end-time">
-                      End Time
-                    </label>
+                    <label className="modal-label">End</label>
                     <input
                       type="time"
-                      id="booking-end-time"
                       name="booking-end-time"
                       className="modal-input"
                       required
@@ -1026,24 +854,17 @@ function AdminDashboard() {
                 </div>
               </div>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="booking-purpose">
-                  Purpose of Reservation
-                </label>
+                <label className="modal-label">Purpose</label>
                 <textarea
-                  id="booking-purpose"
                   name="booking-purpose"
                   className="modal-textarea"
-                  placeholder="Describe the purpose of this reservation"
                   required
                 ></textarea>
               </div>
               <div className="modal-form-group">
-                <label className="modal-label" htmlFor="booking-attendees">
-                  Expected Number of Attendees
-                </label>
+                <label className="modal-label">Attendees</label>
                 <input
                   type="number"
-                  id="booking-attendees"
                   name="booking-attendees"
                   className="modal-input"
                   min="1"
@@ -1053,18 +874,13 @@ function AdminDashboard() {
               <div className="modal-actions">
                 <button
                   type="button"
-                  id="cancel-booking-btn"
                   className="deny-btn"
                   onClick={closeBookingModal}
                 >
-                  <i className="fas fa-times"></i> Cancel
+                  Cancel
                 </button>
-                <button
-                  type="submit"
-                  id="confirm-booking-btn"
-                  className="approve-btn"
-                >
-                  <i className="fas fa-check"></i> Confirm Booking
+                <button type="submit" className="approve-btn">
+                  Confirm
                 </button>
               </div>
             </form>
@@ -1072,7 +888,6 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* --- THIS IS THE CORRECTED ALERT BLOCK --- */}
       {alert.show && (
         <div
           id="success-alert"
@@ -1087,52 +902,28 @@ function AdminDashboard() {
               }
             ></i>
             <div className="alert-message">
-              <p id="alert-message">{alert.message}</p>
-              <div className="alert-actions">
-                <button
-                  id="close-alert"
-                  className="alert-button"
-                  onClick={() => setAlert({ show: false, message: "" })}
-                >
-                  Dismiss
-                </button>
-              </div>
+              <p>{alert.message}</p>
             </div>
           </div>
         </div>
       )}
 
       {isConfirmModalOpen && (
-        <div
-          className="confirm-modal"
-          id="confirm-modal"
-          style={{ display: "flex" }}
-        >
+        <div className="confirm-modal" style={{ display: "flex" }}>
           <div className="confirm-modal-content">
-            <div className="confirm-modal-header">
-              <h3>Confirm Action</h3>
-              <button
-                className="close-btn"
-                id="close-confirm-modal"
-                onClick={closeConfirmModal}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="confirm-modal-message" id="confirm-message">
+            <h3>Confirm Action</h3>
+            <div className="confirm-modal-message">
               {confirmModalData.message}
             </div>
             <div className="confirm-modal-actions">
               <button
                 className="confirm-cancel-btn"
-                id="confirm-cancel"
                 onClick={closeConfirmModal}
               >
                 Cancel
               </button>
               <button
                 className="confirm-proceed-btn"
-                id="confirm-proceed"
                 onClick={proceedWithConfirmedAction}
               >
                 {confirmModalData.action === "approve" ? "Approve" : "Deny"}

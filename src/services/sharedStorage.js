@@ -1,7 +1,11 @@
 // src/services/sharedStorage.js
 
 import * as api from "./apiService.js";
-import { isBackendOnline } from "./status.js";
+// import { isBackendOnline } from "./status.js"; // <--- COMMENTED OUT TO BYPASS CHECK
+
+// --- FORCE ONLINE MODE ---
+// We assume online by default so the app ALWAYS tries to fetch from the backend first.
+const isBackendOnline = true;
 
 // --- Local Storage Keys ---
 const RESERVATION_KEY = "classroomReservations";
@@ -513,42 +517,33 @@ export function initializeLocalStorage() {
   }
 }
 
-// --- Data Functions (Now "Smart") ---
+// --- Data Functions (UPDATED: Always try API first) ---
 
 export async function getReservations() {
-  if (isBackendOnline) {
-    try {
-      const dataFromApi = await api.getReservations();
-      localStorage.setItem(RESERVATION_KEY, JSON.stringify(dataFromApi));
-      console.log("Fetched reservations from API");
-      return dataFromApi;
-    } catch (error) {
-      console.error(
-        "API failed to get reservations, falling back to local.",
-        error
-      );
-      return getLocalReservations();
-    }
-  } else {
+  // Always try API first (Bypassing status check)
+  try {
+    const dataFromApi = await api.getReservations();
+    localStorage.setItem(RESERVATION_KEY, JSON.stringify(dataFromApi));
+    console.log("Fetched reservations from API");
+    return dataFromApi;
+  } catch (error) {
+    console.warn(
+      "API failed to get reservations, falling back to local.",
+      error
+    );
     return getLocalReservations();
   }
 }
 
 export async function getClassroomData() {
-  if (isBackendOnline) {
-    try {
-      const dataFromApi = await api.getClassrooms();
-      localStorage.setItem(CLASSROOM_KEY, JSON.stringify(dataFromApi));
-      console.log("Fetched classrooms from API");
-      return dataFromApi;
-    } catch (error) {
-      console.error(
-        "API failed to get classrooms, falling back to local.",
-        error
-      );
-      return getLocalClassroomData();
-    }
-  } else {
+  // Always try API first (Bypassing status check)
+  try {
+    const dataFromApi = await api.getClassrooms();
+    localStorage.setItem(CLASSROOM_KEY, JSON.stringify(dataFromApi));
+    console.log("Fetched classrooms from API");
+    return dataFromApi;
+  } catch (error) {
+    console.warn("API failed to get classrooms, falling back to local.", error);
     return getLocalClassroomData();
   }
 }
@@ -557,12 +552,18 @@ export async function getClassroomData() {
 
 export function getLocalReservations() {
   console.log("Fetched reservations from LOCAL");
-  return JSON.parse(localStorage.getItem(RESERVATION_KEY));
+  return (
+    JSON.parse(localStorage.getItem(RESERVATION_KEY)) || {
+      pending: [],
+      approved: [],
+      denied: [],
+    }
+  );
 }
 
 export function getLocalClassroomData() {
   console.log("Fetched classrooms from LOCAL");
-  return JSON.parse(localStorage.getItem(CLASSROOM_KEY));
+  return JSON.parse(localStorage.getItem(CLASSROOM_KEY)) || {};
 }
 
 // --- NEW FUNCTION to save classroom data locally ---
@@ -571,13 +572,15 @@ export function saveClassroomLocally(updatedClassroom) {
 
   let notFound = true;
   for (const location in localData) {
-    const index = localData[location].findIndex(
-      (c) => c.id === updatedClassroom.id
-    );
-    if (index !== -1) {
-      localData[location][index] = updatedClassroom;
-      notFound = false;
-      break;
+    if (localData[location]) {
+      const index = localData[location].findIndex(
+        (c) => c.id === updatedClassroom.id
+      );
+      if (index !== -1) {
+        localData[location][index] = updatedClassroom;
+        notFound = false;
+        break;
+      }
     }
   }
 

@@ -4,22 +4,36 @@ import React, { useState, useEffect, useCallback } from "react";
 import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/material_blue.css"; // Import flatpickr theme
 
-// --- UPDATED IMPORTS ---
+// --- IMPORTS ---
 import * as api from "../../services/apiService.js";
 import * as storage from "../../services/sharedStorage.js";
 import { isBackendOnline } from "../../services/status.js";
-// We get the user from the AuthContext now
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
-import "../../index.css"; // <-- Make sure global CSS is imported
+import "../../index.css";
 
 // --- Helper component for rendering reservations ---
 const ReservationItem = ({ reservation, status, onEdit, onDelete }) => (
   <div className={`reservation-notification ${status}`}>
     <div className="reservation-content">
-      <div className="reservation-title">{reservation.classroom}</div>
+      {/* Display name if available, otherwise just ID for now (backend sends object) */}
+      <div className="reservation-title">
+        {typeof reservation.classroom === "object"
+          ? reservation.classroom.name
+          : reservation.classroom}
+      </div>
       <div className="reservation-details">
-        {storage.formatDate(reservation.date)} | {reservation.time}
+        {storage.formatDate(reservation.startTime || reservation.date)} |
+        {/* Helper to show time from ISO string or local string */}
+        {reservation.startTime
+          ? `${new Date(reservation.startTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })} - ${new Date(reservation.endTime).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}`
+          : reservation.time}
         {reservation.recurrent && reservation.recurrent !== "none" && (
           <span className="recurrent-badge">
             {reservation.recurrent.charAt(0).toUpperCase() +
@@ -58,7 +72,7 @@ const ReservationItem = ({ reservation, status, onEdit, onDelete }) => (
 // --- Main Dashboard Component ---
 function UserDashboard() {
   // --- Auth & Navigation ---
-  const { currentUser, loading, logout } = useAuth(); // Use the hook
+  const { currentUser, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   // --- React State ---
@@ -73,8 +87,8 @@ function UserDashboard() {
   // Modal State
   const [isReservationModalOpen, setIsReservationModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [currentReservation, setCurrentReservation] = useState(null); // For modal data
-  const [editId, setEditId] = useState(null); // To track if editing
+  const [currentReservation, setCurrentReservation] = useState(null);
+  const [editId, setEditId] = useState(null);
 
   // Form Input State
   const [date, setDate] = useState(new Date());
@@ -98,39 +112,51 @@ function UserDashboard() {
   // --- Alert Function ---
   const showAlert = useCallback((message, type = "success") => {
     setAlert({ show: true, message, type });
-    // Auto-hide after 5 seconds
     setTimeout(() => {
       setAlert({ show: false, message: "", type: "success" });
-    }, 5000); // 5 seconds
-  }, []); // <-- We wrap it in useCallback
+    }, 5000);
+  }, []);
 
   // --- Data Loading Functions ---
   const loadAllClassrooms = useCallback(async () => {
     try {
-      const data = await storage.getClassroomData(); // Smart function
-      filterAndDisplayClassrooms(data, "ALL", false); // Display all initially
+      const data = await storage.getClassroomData();
+      filterAndDisplayClassrooms(data, "ALL", false);
     } catch (error) {
       console.error("Failed to display classrooms:", error);
       showAlert("Error: Could not load classroom data.", "error");
     }
-  }, [showAlert]); // Add showAlert as dependency
+  }, [showAlert]);
 
   const loadAllReservations = useCallback(
     async (user) => {
-      if (!user) return; // Don't run if user is not loaded
+      if (!user) return;
       try {
-        const data = await storage.getReservations(); // Smart function
+        const data = await storage.getReservations();
         if (!data) throw new Error("No reservation data found.");
 
+        // NOTE: Backend returns all reservations. In a real app, backend filters by userId.
+        // Here we filter client-side just to be safe if backend sends everything.
+        const myPending = data.pending.filter(
+          (r) => r.userId === user.id || r.studentId === user.studentId
+        );
+        const myApproved = data.approved.filter(
+          (r) => r.userId === user.id || r.studentId === user.studentId
+        );
+        const myDenied = data.denied.filter(
+          (r) => r.userId === user.id || r.studentId === user.studentId
+        );
+
         setReservations({
-          pending: data.pending.filter((r) => r.studentId === user.studentId),
-          approved: data.approved.filter((r) => r.studentId === user.studentId),
-          denied: data.denied.filter((r) => r.studentId === user.studentId),
+          pending: myPending,
+          approved: myApproved,
+          denied: myDenied,
         });
 
-        const historyItems = [...data.approved, ...data.denied]
-          .filter((r) => r.studentId === user.studentId)
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        const historyItems = [...myApproved, ...myDenied].sort(
+          (a, b) =>
+            new Date(b.startTime || b.date) - new Date(a.startTime || a.date)
+        );
         setHistory(historyItems);
       } catch (error) {
         console.error("Failed to load reservations:", error);
@@ -138,30 +164,23 @@ function UserDashboard() {
       }
     },
     [showAlert]
-  ); // Add showAlert as dependency
+  );
 
   // --- Load Data on Page Start ---
   useEffect(() => {
-    // This runs when auth loading is done
     if (!loading) {
       if (!currentUser) {
-        // If auth is done and still no user, redirect to login
         navigate("/login");
         return;
       }
-
-      // 3. Init local storage
       storage.initializeLocalStorage();
-
-      // 4. Load initial data
       loadAllClassrooms();
-      loadAllReservations(currentUser); // Pass the user from auth
+      loadAllReservations(currentUser);
 
-      // 5. Setup background tasks
       const reminderInterval = setInterval(checkRecurrentReminders, 60000);
-      return () => clearInterval(reminderInterval); // Cleanup on unmount
+      return () => clearInterval(reminderInterval);
     }
-  }, [loading, currentUser, navigate, loadAllClassrooms, loadAllReservations]); // Re-run if auth state changes
+  }, [loading, currentUser, navigate, loadAllClassrooms, loadAllReservations]);
 
   // --- UI Display Functions ---
 
@@ -191,7 +210,6 @@ function UserDashboard() {
     }
     setDisplayedClassrooms(roomsToShow);
 
-    // Update filter status
     if (isFiltered) {
       setFilterStatus({
         show: true,
@@ -206,12 +224,10 @@ function UserDashboard() {
   };
 
   const handleSearchAvailability = async () => {
-    // This is still the simulation logic
     const datePicker = document.getElementById("date-picker");
     const startTime = document.getElementById("start-time");
     const endTime = document.getElementById("end-time");
     if (!datePicker.value || !startTime.value || !endTime.value) {
-      // --- FIX 1 ---
       return showAlert(
         "Please select date and time to check availability.",
         "error"
@@ -219,117 +235,153 @@ function UserDashboard() {
     }
 
     try {
-      let data = await storage.getLocalClassroomData(); // Get fresh local data
+      let data = await storage.getLocalClassroomData();
+      // Simulation of filtering
       for (const location in data) {
         data[location].forEach((classroom) => {
           classroom.available = Math.random() < 0.7;
         });
       }
-      // setClassroomData(data); // This line is not needed
-      filterAndDisplayClassrooms(data, locationFilter, true); // Re-run filter
+      filterAndDisplayClassrooms(data, locationFilter, true);
     } catch (error) {
-      // --- FIX 2 ---
       showAlert("Could not load classroom data for filtering.", "error");
     }
   };
 
-  // --- Reservation Logic ---
+  // --- RESERVATION SUBMISSION LOGIC (FIXED) ---
 
   const handleReservationSubmit = async (e) => {
     e.preventDefault();
 
-    const reservationData = {
+    // 1. Extract raw form values
+    const formDate = e.target.elements["reservation-date"].value;
+    const formTimeRange = e.target.elements["reservation-time"].value;
+    const purpose = e.target.elements["reservation-purpose"].value;
+    const attendees = parseInt(
+      e.target.elements["reservation-attendees"].value
+    );
+    const recurrent = e.target.elements["recurrent"].value;
+
+    // 2. Validate basic inputs
+    if (!purpose || !attendees) {
+      return showAlert("Please fill in all fields.", "error");
+    }
+    if (attendees > currentReservation.capacity) {
+      return showAlert(`Attendees (${attendees}) exceeds capacity.`, "error");
+    }
+
+    // 3. PARSE DATES (Convert "09:00 - 11:00" to actual Date objects for Backend)
+    let startTimeObj, endTimeObj;
+    try {
+      const [startStr, endStr] = formTimeRange.split(" - ");
+      // Combine date + time string (e.g., "2025-10-10T09:00:00")
+      startTimeObj = new Date(`${formDate}T${startStr}:00`);
+      endTimeObj = new Date(`${formDate}T${endStr}:00`);
+    } catch (err) {
+      return showAlert("Invalid Date/Time format.", "error");
+    }
+
+    // 4. Construct API Payload (Strictly what backend expects)
+    const apiPayload = {
+      classroomId: currentReservation.id,
+      startTime: startTimeObj.toISOString(),
+      endTime: endTimeObj.toISOString(),
+      purpose: purpose,
+    };
+
+    // 5. Construct UI Payload (For immediate local display fallback)
+    const uiPayload = {
       studentName: currentUser.firstName + " " + currentUser.lastName,
       studentId: currentUser.studentId,
       email: currentUser.email,
-      classroom: currentReservation.name, // From the classroom object
-      date: e.target.elements["reservation-date"].value,
-      time: e.target.elements["reservation-time"].value,
-      purpose: e.target.elements["reservation-purpose"].value,
-      attendees: parseInt(e.target.elements["reservation-attendees"].value),
+      classroom: currentReservation.name,
+      date: formDate,
+      time: formTimeRange,
+      purpose: purpose,
+      attendees: attendees,
       status: "pending",
-      recurrent: e.target.elements["recurrent"].value,
+      recurrent: recurrent,
     };
 
-    if (!reservationData.purpose || !reservationData.attendees) {
-      // --- FIX 3 ---
-      return showAlert("Please fill in all fields.", "error");
-    }
-    if (reservationData.attendees > currentReservation.capacity) {
-      // --- FIX 4 ---
-      return showAlert(
-        `Attendees (${reservationData.attendees}) exceeds capacity (${currentReservation.capacity}).`,
-        "error"
-      );
-    }
-
     try {
-      if (!isBackendOnline) throw new Error("Offline. Falling back to local.");
+      // Force check for true to attempt fetch
+      // Note: isBackendOnline in sharedStorage.js should be set to true
+      // if (!isBackendOnline) throw new Error("Offline mode forced.");
 
       if (editId) {
-        await api.updateReservation(editId, reservationData);
+        await api.updateReservation(editId, apiPayload);
       } else {
-        await api.createReservation(reservationData);
+        await api.createReservation(apiPayload);
       }
-      showAlert(
-        editId
-          ? "Reservation updated successfully!"
-          : "Reservation request submitted!"
-      );
-    } catch (error) {
-      console.warn(
-        "API submission failed. Falling back to local storage.",
-        error.message
-      );
-      const localReservations = storage.getLocalReservations();
 
+      showAlert(editId ? "Reservation updated!" : "Request submitted!");
+
+      // Close modal immediately on success
+      setIsReservationModalOpen(false);
+      setEditId(null);
+      await loadAllReservations(currentUser);
+    } catch (error) {
+      console.warn("API submission failed. Falling back to local.", error);
+
+      // --- LOCAL FALLBACK LOGIC ---
+      const localReservations = storage.getLocalReservations();
       if (editId) {
         const index = localReservations.pending.findIndex(
-          (res) => res.id === editId
+          (r) => r.id === editId
         );
-        if (index !== -1) {
+        if (index !== -1)
           localReservations.pending[index] = {
             ...localReservations.pending[index],
-            ...reservationData,
+            ...uiPayload,
             id: editId,
           };
-        }
       } else {
-        reservationData.id = "LOCAL-" + Date.now();
-        localReservations.pending.push(reservationData);
+        uiPayload.id = "LOCAL-" + Date.now();
+        localReservations.pending.push(uiPayload);
       }
-
       localStorage.setItem(
         "classroomReservations",
         JSON.stringify(localReservations)
       );
-      showAlert(
-        editId
-          ? "Backend not responding. Reservation updated locally."
-          : "Backend not responding. Reservation saved locally.",
-        "success"
-      );
-    } finally {
+
+      showAlert("Backend error. Saved locally.", "success");
       setIsReservationModalOpen(false);
       setEditId(null);
-      await loadAllReservations(currentUser);
+
+      // We manually update state to show the new local item immediately
+      setReservations((prev) => ({
+        ...prev,
+        pending: [...prev.pending, uiPayload],
+      }));
     }
   };
 
   const handleEditReservation = async (id) => {
-    const localReservations = storage.getLocalReservations();
-    const reservation = localReservations.pending.find((res) => res.id === id);
+    // Try to find in state first
+    let reservation = [...reservations.pending].find((res) => res.id === id);
+
+    // If not found in state (rare), check storage
     if (!reservation) {
-      // --- FIX 5 ---
+      const localReservations = storage.getLocalReservations();
+      reservation = localReservations.pending.find((res) => res.id === id);
+    }
+
+    if (!reservation) {
       return showAlert("Could not find reservation to edit.", "error");
     }
 
+    // Need to find the classroom object to repopulate the modal
     const allClassrooms = await storage.getLocalClassroomData();
     let classroomDetails = null;
+
+    // Handle both string name (local) and object (backend)
+    const roomName =
+      typeof reservation.classroom === "object"
+        ? reservation.classroom.name
+        : reservation.classroom;
+
     for (const location in allClassrooms) {
-      const found = allClassrooms[location].find(
-        (c) => c.name === reservation.classroom
-      );
+      const found = allClassrooms[location].find((c) => c.name === roomName);
       if (found) {
         classroomDetails = found;
         break;
@@ -337,7 +389,6 @@ function UserDashboard() {
     }
 
     if (!classroomDetails) {
-      // --- FIX 6 ---
       return showAlert("Could not find classroom details to edit.", "error");
     }
 
@@ -345,24 +396,48 @@ function UserDashboard() {
     setCurrentReservation(classroomDetails);
     setIsReservationModalOpen(true);
 
+    // Populate fields
     setTimeout(() => {
-      document.getElementById("reservation-date").value = reservation.date;
-      document.getElementById("reservation-time").value = reservation.time;
+      // If it's a backend reservation, we need to format ISO dates back to form strings
+      if (reservation.startTime) {
+        const start = new Date(reservation.startTime);
+        const end = new Date(reservation.endTime);
+        const dateStr = start.toISOString().split("T")[0];
+        const timeStr = `${start.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })} - ${end.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}`;
+
+        document.getElementById("reservation-date").value = dateStr;
+        document.getElementById("reservation-time").value = timeStr;
+      } else {
+        // Local format
+        document.getElementById("reservation-date").value = reservation.date;
+        document.getElementById("reservation-time").value = reservation.time;
+      }
+
       document.getElementById("reservation-purpose").value =
-        reservation.purpose;
+        reservation.purpose || "";
+      // Default attendees to 1 if missing in backend data
       document.getElementById("reservation-attendees").value =
-        reservation.attendees;
-      document.querySelector(
-        `input[name="recurrent"][value="${reservation.recurrent || "none"}"]`
-      ).checked = true;
-    }, 0);
+        reservation.attendees || 1;
+
+      const recVal = reservation.recurrent || "none";
+      const rad = document.querySelector(
+        `input[name="recurrent"][value="${recVal}"]`
+      );
+      if (rad) rad.checked = true;
+    }, 100);
   };
 
   const handleDeleteReservation = async (id) => {
     if (window.confirm("Are you sure you want to delete this reservation?")) {
       try {
-        if (!isBackendOnline)
-          throw new Error("Offline. Falling back to local.");
         await api.deleteReservation(id);
         showAlert("Reservation deleted successfully");
       } catch (error) {
@@ -431,14 +506,13 @@ function UserDashboard() {
   };
 
   const checkRecurrentReminders = () => {
-    // This logic can stay the same for now
     console.log("Checking reminders...");
   };
 
   // --- Auth & Profile ---
 
   const performLogout = () => {
-    logout(); // Use the logout function from AuthContext
+    logout();
     showAlert("Logging out...");
     setTimeout(() => {
       navigate("/login");
@@ -449,16 +523,12 @@ function UserDashboard() {
     e.preventDefault();
     const fileInput = document.getElementById("avatar-upload");
     if (fileInput.files.length === 0) {
-      // --- FIX 7 ---
       return showAlert("Please select a file.", "error");
     }
-
     const file = fileInput.files[0];
     const reader = new FileReader();
     reader.onload = (event) => {
       document.getElementById("user-avatar").src = event.target.result;
-      // Here you would normally call an API to update the user's avatar
-      // For now, we just update local state
       showAlert("Profile picture updated locally!");
     };
     reader.readAsDataURL(file);
@@ -468,11 +538,9 @@ function UserDashboard() {
   // --- Render ---
 
   if (loading || !currentUser) {
-    // Show a full-page loading spinner while auth is checking
     return <div>Loading...</div>;
   }
 
-  // Once loading is false and we have a user, render the dashboard
   return (
     <>
       <header className="header">
@@ -898,8 +966,6 @@ function UserDashboard() {
         </div>
       )}
 
-      {/* --- THIS IS THE CORRECTED ALERT BLOCK --- */}
-      {/* It is now at the top level, not inside another component */}
       {alert.show && (
         <div
           id="success-alert"
