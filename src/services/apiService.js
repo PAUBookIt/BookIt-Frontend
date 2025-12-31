@@ -1,7 +1,7 @@
 // src/services/apiService.js
 
 // Using 127.0.0.1 to avoid macOS localhost issues
-const BASE_URL = "http://127.0.0.1:5001/api";
+const BASE_URL = process.env.REACT_APP_API_URL || "http://127.0.0.1:5001/api";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
